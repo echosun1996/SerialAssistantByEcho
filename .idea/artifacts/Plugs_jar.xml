@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Plugs:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Plugs_jar</output-path>
+    <root id="archive" name="Plugs.jar">
+      <element id="module-output" name="Plugs" />
+      <element id="module-output" name="SerialAssistantByEcho" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/RXTXcomm.jar" path-in-jar="/" />
+      <element id="file-copy" path="$PROJECT_DIR$/out/production/Plugs/com/echosun/plugs/testclass.class" />
+    </root>
+  </artifact>
+</component>
