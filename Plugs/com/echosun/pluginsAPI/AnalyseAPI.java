@@ -1,4 +1,4 @@
-package com.echosun.plugsin;
+package com.echosun.pluginsAPI;
 
 /**
  * Created by echosun.

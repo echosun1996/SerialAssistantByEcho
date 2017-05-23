@@ -10,10 +10,6 @@ import java.io.IOException;
  */
 public class SysMain {
     public static void main(String[] args) throws IOException {
-        System.out.println("start!");
-        System.out.println("Frame init!");
-        System.out.println("Frame init!");
         MainFrame mainFrame = new MainFrame();
-        System.out.println("end!");
     }
 }

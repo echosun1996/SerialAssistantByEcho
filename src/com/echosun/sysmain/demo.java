@@ -1,5 +1,10 @@
 package com.echosun.sysmain;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 /**
  * Created by echosun.
  * All rights reserved.
@@ -7,28 +12,12 @@ package com.echosun.sysmain;
 
 
 public class demo {
+///User/echosun/1.txt
 
-
-    public static void main(String[] args) {
-
-
-
-
-
-/*
-        try {
-            Class<?> aClass = Class.forName("testclass");
-            AnalyseAPI aObj=(AnalyseAPI) aClass.newInstance();
-            aObj.fun();
-
-
-        } catch (ClassNotFoundException e) {
-            System.out.println("error");
-            e.printStackTrace();
-        } catch (IllegalAccessException | InstantiationException e) {
-            e.printStackTrace();
-        }
-*/
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        String url = in.readLine();
+        File fileUrl = new File(url);
 
 
     }

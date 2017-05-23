@@ -1,6 +1,6 @@
 package com.echosun.plugs;
 
-import com.echosun.plugsin.AnalyseAPI;
+import com.echosun.pluginsAPI.AnalyseAPI;
 
 /**
  * Created by echosun.

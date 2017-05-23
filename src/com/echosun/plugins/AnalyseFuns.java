@@ -1,11 +1,13 @@
-package com.echosun.plugsin;
+package com.echosun.plugins;
+
+import com.echosun.pluginsAPI.AnalyseAPI;
 
 /**
  * Created by echosun.
  * All rights reserved.
  */
 public class AnalyseFuns {
-    private AnalyseAPI apiSave = null;
+    private com.echosun.pluginsAPI.AnalyseAPI apiSave = null;
     private boolean plugEnable = false;
 
     AnalyseFuns(AnalyseAPI in) {

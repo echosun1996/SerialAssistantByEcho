@@ -1,6 +1,7 @@
 package com.echosun.ui;
 
 
+import com.echosun.plugins.PlugsManage;
 import com.echosun.serialport.*;
 import gnu.io.SerialPort;
 import gnu.io.SerialPortEvent;
@@ -13,21 +14,24 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
+/**
+ * MainFrame for SerialAssistant.
+ */
 public class MainFrame extends JFrame {
     private static final long serialVersionUID = 1L;
 
     // 功能区参数
-    private int whichFunction;
+    private boolean serverSwitch;
 
     private JComboBox<String> serialSelectCB;
     private JComboBox<Integer> baudSelectCB;
     private SerialPort serialport;
-//    private JLabel gpsLB1;
-//    private JLabel gpsTimeLB;
-//    private JLabel gpsTxtLB;
+    private JTextArea serialMessagesTF;
 
     public MainFrame() {
         super("main");
+        //default for close
+        setServerSwitch(false);
         // 设置程序窗口居中显示
         Point p = GraphicsEnvironment.getLocalGraphicsEnvironment().getCenterPoint();
         int WIDTH = 1000;
@@ -64,22 +68,27 @@ public class MainFrame extends JFrame {
         setRunBT.setBounds(229, 48, 90, 21);
         serialPortSetJP.add(setRunBT);
         setRunBT.addActionListener((ActionEvent actionEvent) -> {
-                    int tp = 1;
                     int baud = (int) baudSelectCB.getSelectedItem();
                     String serial = (String) serialSelectCB.getSelectedItem();
                     if (serial.equals("请选择串口"))
                         ShowUtils.warningMessage("请设置正确的串口");
                     else if ("打开串口".equals(setRunBT.getText())) {
-
+                        //close
                         try {
                             serialport = SerialportFun.openPort(serial, baud);
+                            baudSelectCB.setEnabled(false);
+                            serialSelectCB.setEnabled(false);
+                            setRunBT.setText("关闭串口");
+                            System.out.println("close");
+                            setServerSwitch(true);
                         } catch (SerialPortParameterFailure | NoSuchPort | NotASerialPort | PortInUse e1) {
                             ShowUtils.warningMessage(e1.toString());
-                            tp = 0;
                         }
-                        if (tp == 1)
-                            setRunBT.setText("关闭串口");
                     } else if ("关闭串口".equals(setRunBT.getText())) {
+                        //open
+                        setServerSwitch(false);
+                        baudSelectCB.setEnabled(true);
+                        serialSelectCB.setEnabled(true);
                         SerialportFun.closePort(serialport);
                         setRunBT.setText("打开串口");
                     } else {
@@ -87,9 +96,9 @@ public class MainFrame extends JFrame {
                     }
                     try {
                         System.out.println(serialport);
-                        if (tp == 1)
-                            SerialportFun.addListener(serialport, new SerialListener());
-                    } catch (TooManyListeners ignored) {
+                        SerialportFun.addListener(serialport, new serialEvent());
+                    } catch (TooManyListeners e2) {
+                        ShowUtils.warningMessage(e2.toString());
                     }
 
                 }
@@ -100,7 +109,7 @@ public class MainFrame extends JFrame {
         serialSelectCB.setBounds(86, 17, 233, 21);
         serialPortSetJP.add(serialSelectCB);
         serialSelectCB.removeAllItems();
-        serialSelectCB.addItem("请选择串口");
+        serialSelectCB.addItem("/dev/cu.usbmodem14441");//请选择串口
         // 添加下拉框的功能
         serialSelectCB.addPopupMenuListener(new PopupMenuListener() {
 
@@ -120,7 +129,6 @@ public class MainFrame extends JFrame {
 
             @Override
             public void popupMenuCanceled(PopupMenuEvent arg0) {
-
             }
 
             @Override
@@ -159,7 +167,6 @@ public class MainFrame extends JFrame {
         JTabbedPane functionsTP = new JTabbedPane(JTabbedPane.TOP);
         functionsTP.setBounds(10, 21, 434, 397);
         functionsJP.add(functionsTP);
-        whichFunction = 0;
 
         // 新页面
         String[] tabNames = {"首页"};
@@ -178,11 +185,13 @@ public class MainFrame extends JFrame {
         serialMessagesSP.setBounds(10, 20, 490, 337);
         serialMessagesJP.add(serialMessagesSP);
 
-        JTextArea serialMessagesTF = new JTextArea();
-        serialMessagesTF.setForeground(Color.GREEN);
+        serialMessagesTF = new JTextArea();
+        serialMessagesTF.setForeground(Color.WHITE);
         serialMessagesTF.setBackground(Color.BLACK);
-        serialMessagesTF.setFont(new Font("黑体", Font.BOLD, 11));
+        serialMessagesTF.setFont(new Font("黑体", Font.BOLD, 14));
         serialMessagesSP.setViewportView(serialMessagesTF);
+        serialMessagesTF.setLineWrap(true);//wrap line
+        serialMessagesTF.setWrapStyleWord(true);//wrap words
 
         JPanel messageSendJP = new JPanel();
         messageSendJP.setBorder(BorderFactory.createTitledBorder("消息发送"));
@@ -190,49 +199,83 @@ public class MainFrame extends JFrame {
         getContentPane().add(messageSendJP);
         messageSendJP.setLayout(null);
 
-        JTextField messagesTF = new JTextField();
+
+        JTextArea messagesTF = new JTextArea();
         messagesTF.setBounds(10, 29, 389, 105);
+        messagesTF.setFont(new Font("黑体", Font.BOLD, 20));
+        messagesTF.setLineWrap(true);
+        messagesTF.setWrapStyleWord(true);
         messageSendJP.add(messagesTF);
 
-        JButton sendMessagesBT = new JButton("发送");
-        sendMessagesBT.setBounds(409, 29, 93, 23);
-        messageSendJP.add(sendMessagesBT);
 
         JButton cleanMessagesBT = new JButton("清除");
         cleanMessagesBT.setBounds(409, 58, 93, 23);
         messageSendJP.add(cleanMessagesBT);
+        cleanMessagesBT.addActionListener(e -> messagesTF.setText(""));
 
         JCheckBox sendNewlineCB = new JCheckBox("发送换行");
         sendNewlineCB.setActionCommand("发送新行");
         sendNewlineCB.setBounds(409, 87, 103, 23);
         messageSendJP.add(sendNewlineCB);
+        sendNewlineCB.setSelected(true);
 
-        JButton messageCleanBT = new JButton("保存数据");
+        JButton messageCleanBT = new JButton("清空数据");
         messageCleanBT.setBounds(371, 10, 93, 23);
         getContentPane().add(messageCleanBT);
+        messageCleanBT.addActionListener(e -> {
+            serialMessagesTF.setText("");
+        });
+
+        JButton sendMessagesBT = new JButton("发送");
+        sendMessagesBT.setBounds(409, 29, 93, 23);
+        messageSendJP.add(sendMessagesBT);
+        sendMessagesBT.addActionListener(e -> {
+                    if (isServerSwitch()) {
+                        String sendMes = messagesTF.getText();
+                        try {
+                            if (sendNewlineCB.isSelected())
+                                sendMes += "\r\n";
+                            SerialportFun.sendToPort(serialport, sendMes.getBytes());
+                        } catch (SendDataToSerialPortFailure | SerialPortOutputStreamCloseFailure sendDataToSerialPortFailure) {
+                            ShowUtils.errorMessage(sendDataToSerialPortFailure.toString());
+                            sendDataToSerialPortFailure.printStackTrace();
+                        }
+                    } else
+                        ShowUtils.warningMessage("串口未打开");
+                }
+
+
+        );
 
         JButton aboutBT = new JButton("关于");
         aboutBT.setBounds(371, 68, 93, 23);
         getContentPane().add(aboutBT);
+        aboutBT.addActionListener(e -> {
+            ShowUtils.message(PlugsManage.test());
+            System.out.println(isServerSwitch());
+        });
 
-        JButton messageSaveBT = new JButton("清空数据");
+        JButton messageSaveBT = new JButton("保存数据");
         messageSaveBT.setBounds(371, 39, 93, 23);
         getContentPane().add(messageSaveBT);
 
+
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+
+        PlugsManage.frameInit(functionsTP);
 
         this.setVisible(true);
     }
 
-    public int getWhichFunction() {
-        return whichFunction;
+    public boolean isServerSwitch() {
+        return serverSwitch;
     }
 
-    public void setWhichFunction(int whichFunction) {
-        this.whichFunction = whichFunction;
+    public void setServerSwitch(boolean serverSwitch) {
+        this.serverSwitch = serverSwitch;
     }
 
-    private class SerialListener implements SerialPortEventListener {
+    private class serialEvent implements SerialPortEventListener {
 
         void messageAnalyse(String data) {
 
@@ -275,8 +318,8 @@ public class MainFrame extends JFrame {
                             data = SerialportFun.readFromPort(serialport);
                             String message = new String(data);
                             messageAnalyse(message);
-                            //serialMessagesTF.append(message + "\r\n");
-                            //serialMessagesTF.setCaretPosition(serialMessagesTF.getText().length());
+                            serialMessagesTF.append("Serial:\r\n" + message + "\r\n\r\n");
+                            serialMessagesTF.setCaretPosition(serialMessagesTF.getText().length());
 
                         }
                     } catch (Exception e) {

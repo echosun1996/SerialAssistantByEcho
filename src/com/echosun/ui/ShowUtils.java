@@ -27,7 +27,7 @@ public class ShowUtils {
      *
      * @param message 消息内容
      */
-    static void warningMessage(String message) {
+    public static void warningMessage(String message) {
         JOptionPane.showMessageDialog(null, message, "警告",
                 JOptionPane.WARNING_MESSAGE);
     }
@@ -37,7 +37,7 @@ public class ShowUtils {
      *
      * @param message 消息内容
      */
-    static void errorMessage(String message) {
+    public static void errorMessage(String message) {
         JOptionPane.showMessageDialog(null, message, "错误",
                 JOptionPane.ERROR_MESSAGE);
     }
