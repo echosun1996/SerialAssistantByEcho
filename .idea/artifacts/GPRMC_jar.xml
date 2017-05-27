@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="GPRMC:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/GPRMC_jar</output-path>
+    <root id="archive" name="GPRMC.jar">
+      <element id="module-output" name="GPRMC" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/out/artifacts/PluginsAPI_jar/AnalyseAPI.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

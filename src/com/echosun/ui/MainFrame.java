@@ -1,6 +1,8 @@
 package com.echosun.ui;
 
 
+import com.echosun.plugins.AnalyseFuns;
+import com.echosun.plugins.Plugs;
 import com.echosun.plugins.PlugsManage;
 import com.echosun.serialport.*;
 import gnu.io.SerialPort;
@@ -13,6 +15,9 @@ import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Map;
+
+import static com.echosun.plugins.PlugsManage.getPlugsList;
 
 /**
  * MainFrame for SerialAssistant.
@@ -20,14 +25,17 @@ import java.util.ArrayList;
 public class MainFrame extends JFrame {
     private static final long serialVersionUID = 1L;
 
+    //local pluginsmap
+    //private Map<String, Plugs> pluginsMap;
     // 功能区参数
+    JTabbedPane functionsTP;
+
     private boolean serverSwitch;
 
     private JComboBox<String> serialSelectCB;
     private JComboBox<Integer> baudSelectCB;
     private SerialPort serialport;
     private JTextArea serialMessagesTF;
-
     public MainFrame() {
         super("main");
         //default for close
@@ -43,7 +51,7 @@ public class MainFrame extends JFrame {
         this.setJMenuBar(mainBar);
         JMenu mainMenu[] = {new JMenu("数据库"), new JMenu("常用工具"), new JMenu("拓展插件")};
         JMenuItem mainItem[][] = {
-                {new JMenuItem("上传"), new JMenuItem("重新连接")},
+                {new JMenuItem("连接设置"), new JMenuItem("重新连接")},
                 {new JMenuItem("计算器"), new JMenuItem("记事本")},
                 {}
         };
@@ -52,8 +60,27 @@ public class MainFrame extends JFrame {
             for (int j = 0; j < mainItem[i].length; j++) {
                 mainMenu[i].add(mainItem[i][j]);
             }
-
         }
+
+
+        Map<String, Plugs> pluginsMap = getPlugsList();
+        if (pluginsMap == null)
+            System.out.println("not found");
+        else
+            System.out.println(pluginsMap.size());
+        if (pluginsMap != null)
+            for (String key : pluginsMap.keySet()) {
+                JCheckBoxMenuItem JMtemp = new JCheckBoxMenuItem(key);
+                JMtemp.addActionListener(e -> {
+                    if (JMtemp.isSelected()) {
+                        pluginsMap.get(key).setEnable(true);
+                    } else pluginsMap.get(key).setEnable(false);
+                    System.out.println(key + " status: " + pluginsMap.get(key).getEnable());
+                });
+                JMtemp.setSelected(true);
+                mainMenu[2].add(JMtemp);
+            }
+
 
 
         JPanel serialPortSetJP = new JPanel();
@@ -73,19 +100,20 @@ public class MainFrame extends JFrame {
                     if (serial.equals("请选择串口"))
                         ShowUtils.warningMessage("请设置正确的串口");
                     else if ("打开串口".equals(setRunBT.getText())) {
-                        //close
+                        //open
                         try {
+                            //call pluginsFrameInit function
+                            PlugsManage.pluginsFrameInit(functionsTP);
+
                             serialport = SerialportFun.openPort(serial, baud);
                             baudSelectCB.setEnabled(false);
                             serialSelectCB.setEnabled(false);
                             setRunBT.setText("关闭串口");
-                            System.out.println("close");
-                            setServerSwitch(true);
                         } catch (SerialPortParameterFailure | NoSuchPort | NotASerialPort | PortInUse e1) {
                             ShowUtils.warningMessage(e1.toString());
                         }
                     } else if ("关闭串口".equals(setRunBT.getText())) {
-                        //open
+                        //close
                         setServerSwitch(false);
                         baudSelectCB.setEnabled(true);
                         serialSelectCB.setEnabled(true);
@@ -164,16 +192,16 @@ public class MainFrame extends JFrame {
         getContentPane().add(functionsJP);
         functionsJP.setLayout(null);
 
-        JTabbedPane functionsTP = new JTabbedPane(JTabbedPane.TOP);
-        functionsTP.setBounds(10, 21, 434, 397);
+        functionsTP = new JTabbedPane(JTabbedPane.TOP);
+        functionsTP.setBounds(10, 20, 440, 400);//434 397
         functionsJP.add(functionsTP);
+
 
         // 新页面
         String[] tabNames = {"首页"};
         JPanel functionFirJP = new JPanel();
         functionsTP.addTab(tabNames[0], null, functionFirJP, null);// 加入第一个页面
         functionFirJP.setLayout(null);
-
 
         JPanel serialMessagesJP = new JPanel();
         serialMessagesJP.setBorder(BorderFactory.createTitledBorder("串口消息"));
@@ -230,7 +258,7 @@ public class MainFrame extends JFrame {
         sendMessagesBT.setBounds(409, 29, 93, 23);
         messageSendJP.add(sendMessagesBT);
         sendMessagesBT.addActionListener(e -> {
-                    if (isServerSwitch()) {
+            if (setServerSwitch()) {
                         String sendMes = messagesTF.getText();
                         try {
                             if (sendNewlineCB.isSelected())
@@ -252,7 +280,7 @@ public class MainFrame extends JFrame {
         getContentPane().add(aboutBT);
         aboutBT.addActionListener(e -> {
             ShowUtils.message(PlugsManage.test());
-            System.out.println(isServerSwitch());
+            System.out.println(setServerSwitch());
         });
 
         JButton messageSaveBT = new JButton("保存数据");
@@ -262,12 +290,12 @@ public class MainFrame extends JFrame {
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        PlugsManage.frameInit(functionsTP);
+        //PlugsManage.pluginsFrameInit(functionsTP);
 
         this.setVisible(true);
     }
 
-    public boolean isServerSwitch() {
+    public boolean setServerSwitch() {
         return serverSwitch;
     }
 
@@ -278,6 +306,11 @@ public class MainFrame extends JFrame {
     private class serialEvent implements SerialPortEventListener {
 
         void messageAnalyse(String data) {
+            Map<String, AnalyseFuns> pluginsMap = PlugsManage.getAnalysePlugs();
+            if (pluginsMap != null)
+                for (AnalyseFuns analyseFuns : pluginsMap.values()) {
+                    analyseFuns.analyse(data);
+                }
 
         }
 

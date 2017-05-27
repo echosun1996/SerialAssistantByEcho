@@ -2,14 +2,19 @@ package com.echosun.plugins;
 
 import com.echosun.pluginsAPI.AnalyseAPI;
 import com.echosun.ui.ShowUtils;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 
 import javax.swing.*;
 import java.io.File;
-import java.net.MalformedURLException;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
@@ -22,6 +27,9 @@ import java.util.regex.Pattern;
 public class PlugsManage {
     private static final String ORI_FOLDER;
 
+    private static Map<String, Plugs> PlugsMap;
+    private static Map<String, AnalyseFuns> AnalysePlugs;
+
     static {
         File directory = new File("");
         ORI_FOLDER = directory.getAbsolutePath() + "/plugins/";
@@ -31,26 +39,48 @@ public class PlugsManage {
         return ORI_FOLDER;
     }
 
-    public static ArrayList<String> frameInit(JTabbedPane functionsTP) {
-        ArrayList<String> ret = new ArrayList<>();
-        return null;
+//    public static Map<String, AnalyseFuns>
+
+    public static Map<String, AnalyseFuns> getAnalysePlugs() {
+        return AnalysePlugs;
     }
 
-    public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, IllegalAccessException, InstantiationException {
-        PlugsManage plugsManage = new PlugsManage();
-        plugsManage.getPlugsList();
-        //plugsManage.addPlugs();
-        //System.out.println(plugsManage.getClass().getClassLoader().getResource(""));
+    public static void pluginsFrameInit(JTabbedPane functionsTP) {
+        AnalysePlugs = new HashMap<>();
+
+        functionsTP.removeAll();
+
+        //need to make a class to establish the index tab.
+//        for (int i = 1; i < functionsTP.getTabCount(); i++) {
+//            functionsTP.remove(i);
+//        }
+
+
+        if (PlugsMap != null)
+            for (Plugs plugs : PlugsMap.values()) {
+                if (plugs.getEnable()) {
+                    System.out.println(plugs.getInfoString() + "--FrameInit Started!");
+
+                    if (plugs.getCategory().equals("Analyse")) {
+                        AnalyseFuns analyseFuns = new AnalyseFuns((AnalyseAPI) plugs.getInstanceClass());
+                        analyseFuns.initUI(functionsTP, plugs.getName());
+                        AnalysePlugs.put(plugs.getName(), analyseFuns);
+                    }
+                }
+
+            }
     }
 
-    private ArrayList<String> getPlugsList() {
-        System.out.println(ORI_FOLDER);
+    public static Map<String, Plugs> getPlugsList() {
+        //ArrayList<String> ret = new ArrayList<>();//this is the list of the return
+        PlugsMap = new HashMap<>();
+        System.out.println("folder:" + ORI_FOLDER);//\\
         File file = new File(ORI_FOLDER);
         File[] tempList = file.listFiles();
 
         if (tempList == null) {
             boolean establishNew = file.mkdir();
-            System.out.println(establishNew);
+            System.out.println("not found so establish:" + establishNew);//\\
             try {
                 if (!establishNew) throw new EstablishFolderFailure();
                 else ShowUtils.message("未找到插件文件夹，已新建。");
@@ -59,72 +89,90 @@ public class PlugsManage {
                 return null;
             }
         }
-        System.out.println(tempList != null ? tempList.length : 0);
-        for (File tempfile : (null != tempList) ? tempList : new File[0]) {
+        for (File temp_file : (null != tempList) ? tempList : new File[0]) {
 
-            String regEx = ".*(\\.jar)";    // Non-greedy match on filler
+            String regEx = ".*(\\.jar)";
             Pattern pattern = Pattern.compile(regEx);
-            Matcher matcher = pattern.matcher(tempfile.toString());
-            // 字符串是否与正则表达式相匹配
+            Matcher matcher = pattern.matcher(temp_file.toString());
             boolean rs = matcher.matches();
-            System.out.println(tempfile.toString() + ":" + rs);
+            System.out.println(temp_file.toString() + ":" + rs);//\\
             if (!rs) continue;
+
+            String fileName = temp_file.getName();
+            System.out.println("fileName = " + fileName);
+
+            //jar->info.xml->plug class->load
+
             URL url = null;
             try {
-                JarFile jf = null;
-                try {
-                    jf = new JarFile(tempfile);
-                } catch (Exception ex) {
-                    System.out.println(ex.getMessage());
-                }
-                Enumeration enu = jf != null ? jf.entries() : null;
+                JarFile jf = new JarFile(temp_file);
+                Enumeration enu = jf.entries();
                 while (enu.hasMoreElements()) {
                     JarEntry element = (JarEntry) enu.nextElement();
-                    String name = element.getName();
-                    if (name.toUpperCase().endsWith(".CLASS")) {
-                        System.out.println(name);
+
+                    //find info.xml
+                    if (element.getName().endsWith("info.xml")) {
+                        System.out.println("info.xml load finish");
+
+                        SAXReader reader = new SAXReader();
+                        try {
+                            // 通过reader对象的read方法加载books.xml文件,获取docuemnt对象。
+                            Document document = reader.read(jf.getInputStream(element));
+
+                            // 通过document对象获取根节点bookstore
+
+                            Element pluginsNode = document.getRootElement();
+                            System.out.println(pluginsNode.element("name").getText());
+                            System.out.println(pluginsNode.element("category").getText());
+                            System.out.println(pluginsNode.element("author").getText());
+                            System.out.println(pluginsNode.element("mainClass").getText());
+                            String plugin_name = pluginsNode.element("name").getText();
+                            String plugin_category = pluginsNode.element("category").getText();
+                            String plugin_mainClass = pluginsNode.element("mainClass").getText();
+                            String plugin_auther = pluginsNode.element("author").getText();
+                            System.out.println((fileName + '-' + plugin_name + '-' + plugin_auther));
+
+                            Plugs ana_temp = new Plugs(plugin_name, plugin_auther, plugin_mainClass, plugin_category);
+                            ana_temp.setInfoString(fileName + '-' + plugin_name + '-' + plugin_auther);
+
+                            url = temp_file.toURI().toURL();
+                            URLClassLoader loader = new URLClassLoader(new URL[]{url});
+
+                            Object obj_temp = loader.loadClass(ana_temp.getMainClass()).newInstance();
+                            ana_temp.setInstanceClass(obj_temp);
+
+                            PlugsMap.put(fileName, ana_temp);
+                            System.out.println("Load Finish");
+
+                        } catch (DocumentException | NullPointerException e) {
+                            e.printStackTrace();
+                            System.out.println(jf.getName() + "不是标准化插件");//\\
+
+                        } catch (IllegalAccessException e) {
+                            e.printStackTrace();
+                        } catch (InstantiationException e) {
+                            e.printStackTrace();
+                        } catch (ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+
+
                     }
                 }
 
-
-                url = tempfile.toURI().toURL();
-                URLClassLoader loader = new URLClassLoader(new URL[]{url});
-                System.out.println(loader.getParent());
-            } catch (MalformedURLException e) {
+            } catch (IOException e) {
+                System.out.println("io error");//\\
                 e.printStackTrace();
+
             }
+
         }
-        return null;
+        return PlugsMap;
     }
 
     public void findAllPlugs() {
 
     }
 
-    private void addPlugs() throws MalformedURLException, ClassNotFoundException {
-
-
-        String path = "/Users/echosun/Workspaces/IDEA/SerialAssistantByEcho/out/artifacts/Plugs_jar/Plugs.jar";
-        File file = new File(path);
-        URL url = file.toURI().toURL();
-        URLClassLoader loader = new URLClassLoader(new URL[]{url});
-        try {
-            AnalyseAPI cl1 = (AnalyseAPI) loader.loadClass("com.echosun.plugs.testclass").newInstance();
-            AnalyseFuns use = new AnalyseFuns(cl1);
-            use.use();
-
-        } catch (InstantiationException e) {
-            System.out.println("INS ERROR!");
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            System.out.println("ILL ERROR!");
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            System.out.println("NOT FOUND!");
-            e.printStackTrace();
-        }
-
-
-    }
 
 }

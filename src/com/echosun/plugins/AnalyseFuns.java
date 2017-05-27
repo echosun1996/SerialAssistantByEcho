@@ -2,28 +2,31 @@ package com.echosun.plugins;
 
 import com.echosun.pluginsAPI.AnalyseAPI;
 
+import javax.swing.*;
+
 /**
  * Created by echosun.
  * All rights reserved.
  */
 public class AnalyseFuns {
-    private com.echosun.pluginsAPI.AnalyseAPI apiSave = null;
-    private boolean plugEnable = false;
+    private AnalyseAPI apiSave = null;
+    private JPanel jPanel;
 
-    AnalyseFuns(AnalyseAPI in) {
-        apiSave = in;
+    public AnalyseFuns(AnalyseAPI apiSave) {
+        this.apiSave = apiSave;
     }
 
-    public boolean getEnable() {
-        return plugEnable;
+    public void analyse(String data) {
+        apiSave.analyze(jPanel, data);
     }
 
-    void setEnable(boolean in) {
-        this.plugEnable = in;
+    void initUI(JTabbedPane functionsTP, String name) {
+        jPanel = apiSave.addFrame();
+        functionsTP.addTab(name, null, jPanel, null);
     }
 
     void use() {
-        apiSave.fun();
+        System.out.println("AnalyseFuns in use!");
     }
 
 }

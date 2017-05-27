@@ -1,0 +1,6 @@
+<plugin>
+    <name>gpstxt</name>
+    <category>Analyse</category>
+    <author>echosun</author>
+    <mainClass>com.echosun.Plug.TestDemo</mainClass>
+</plugin>

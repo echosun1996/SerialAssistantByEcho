@@ -1,0 +1,6 @@
+<plugin>
+    <name>$GPRMC</name>
+    <category>Analyse</category>
+    <author>echosun</author>
+    <mainClass>com.echosun.GPRMC.TestDemo</mainClass>
+</plugin>
