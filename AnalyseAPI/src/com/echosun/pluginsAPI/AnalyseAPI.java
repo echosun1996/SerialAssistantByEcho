@@ -1,13 +1,15 @@
 package com.echosun.pluginsAPI;
 
+import javax.swing.*;
+
 /**
  * Created by echosun.
  * All rights reserved.
  */
 public interface AnalyseAPI {
-    void fun();
 
-    void analyze();
+    void analyze(JPanel jPanel, String data);
 
-    void changeUI();
+    JPanel addFrame();
+
 }

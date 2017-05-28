@@ -49,9 +49,9 @@ public class MainFrame extends JFrame {
         //创建菜单栏
         JMenuBar mainBar = new JMenuBar();
         this.setJMenuBar(mainBar);
-        JMenu mainMenu[] = {new JMenu("数据库"), new JMenu("常用工具"), new JMenu("拓展插件")};
+        JMenu mainMenu[] = {new JMenu("功能菜单"), new JMenu("常用工具"), new JMenu("拓展插件")};
         JMenuItem mainItem[][] = {
-                {new JMenuItem("连接设置"), new JMenuItem("重新连接")},
+                {},
                 {new JMenuItem("计算器"), new JMenuItem("记事本")},
                 {}
         };
@@ -137,7 +137,7 @@ public class MainFrame extends JFrame {
         serialSelectCB.setBounds(86, 17, 233, 21);
         serialPortSetJP.add(serialSelectCB);
         serialSelectCB.removeAllItems();
-        serialSelectCB.addItem("/dev/cu.usbmodem14441");//请选择串口
+        serialSelectCB.addItem("请选择串口");//请选择串口
         // 添加下拉框的功能
         serialSelectCB.addPopupMenuListener(new PopupMenuListener() {
 
